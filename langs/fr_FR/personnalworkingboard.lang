@@ -1,0 +1,41 @@
+Module104931Name = PersonnalWorkingBoard
+Module104931Desc = PersonnalWorkingBoard Description
+
+ATMAbout = Ce module a été développé par <a href="http://www.atm-consulting.fr" target="_blank">ATM Consulting</a><br>Vous pouvez retrouver la documentation sur notre <a href="http://wiki.atm-consulting.fr/index.php/Accueil" target="_blank">wiki</a><br><br>Pour toute question technique ou retour, contactez-nous sur <a href="mailto:support@atm-consulting.fr">support@atm-consulting.fr</a><br><br>Pour toute question commerciale, contactez-nous sur <a href="mailto:contact@atm-consulting.fr">contact@atm-consulting.fr</a> ou au +33 9 77 19 50 70<br><br>Retrouvez nos autres modules sur <a href="http://www.dolistore.com/search.php?orderby=position&orderway=desc&search_query=atm&submit_search=Rechercher" target="_blank">Dolistore</a>
+
+PersonnalWorkingBoardSetup = Configuration du module PersonnalWorkingBoard
+PersonnalWorkingBoardAbout = A propos du module PersonnalWorkingBoard
+
+PersonnalWorkingBoard=PersonnalWorkingBoard
+
+# MENU
+TopMenuPersonnalWorkingBoard=PersonnalWorkingBoard
+
+# STATUS
+PersonnalWorkingBoardStatusDraft=Brouillon (à valider)
+PersonnalWorkingBoardStatusValidated=Validée (à accepter)
+PersonnalWorkingBoardStatusRefused=Refusée (fermée)
+PersonnalWorkingBoardStatusAccepted=Acceptée (fermée)
+
+Draft=Brouillon
+Validate=Validé
+Refused=Refusé
+Accepted=Accepté
+
+# LIST
+PersonnalWorkingBoardList=Liste PersonnalWorkingBoard
+NoPersonnalWorkingBoard=(vide)
+
+# CARD
+NewPersonnalWorkingBoard=Création PersonnalWorkingBoard
+PersonnalWorkingBoardCard=Fiche PersonnalWorkingBoard
+
+# CARD TPL
+Save=Enregistrer
+CreateDraft=Créer brouillon
+Cancel=Annuler
+Validate=Valider
+Modify=Modifier
+Reopen=Rouvrir
+ToClone=Cloner
+Delete=Supprimer
