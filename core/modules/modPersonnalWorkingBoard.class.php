@@ -173,6 +173,11 @@ class modPersonnalWorkingBoard extends DolibarrModules
 		// Permissions
 		$this->rights = array();		// Permission array used by this module
 		$r=0;
+		
+		$this->boxes[$r][1] = "box_personnalworkingboard_filtered@personnalworkingboard";
+		$r++;
+		$this->boxes[$r][1] = "box_personnalworkingboard_global@personnalworkingboard";
+		$r++;
 
 		// Add here list of permission defined by an id, a label, a boolean and two constant strings.
 		// Example:

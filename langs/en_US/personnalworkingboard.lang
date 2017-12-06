@@ -5,3 +5,12 @@ ATMAbout = This module has been developed by <a href="http://www.atm-consulting.
 
 PersonnalWorkingBoardSetup = PersonnalWorkingBoard module setup
 PersonnalWorkingBoardAbout = About PersonnalWorkingBoard
+
+PersonnalWorkingBoard=PersonnalWorkingBoard
+
+# BOX
+PersonnalWorkingBoardFilteredWidget=Open items dashboard (filtered on not extended access)
+PersonnalWorkingBoardFilteredBoxDescription=Open items dashboard (filtered on not extended access)
+
+PersonnalWorkingBoardGlobalWidget=Open items dashboard (extended access)
+PersonnalWorkingBoardGlobalBoxDescription=Open items dashboard ouverts (extended access)

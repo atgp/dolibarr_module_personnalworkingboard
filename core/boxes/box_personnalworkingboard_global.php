@@ -22,15 +22,21 @@
  * 	\brief		This file is a sample box definition file
  * 				Put some comments here
  */
-include_once DOL_DOCUMENT_ROOT . "/core/boxes/modules_boxes.php";
+include_once DOL_DOCUMENT_ROOT . '/core/boxes/modules_boxes.php';
+
+
+define('INC_FROM_DOLIBARR', true);
+dol_include_once('/personnalworkingboard/config.php');
+dol_include_once('/personnalworkingboard/class/personnalworkingboard.class.php');
+
 
 /**
  * Class to manage the box
  */
-class personnalworkingboardbox extends ModeleBoxes
+class box_personnalworkingboard_global extends ModeleBoxes
 {
 
-    public $boxcode = "mybox";
+    public $boxcode = "box_personnalworkingboard_global";
     public $boximg = "personnalworkingboard@personnalworkingboard";
     public $boxlabel;
     public $depends = array("personnalworkingboard");
@@ -42,12 +48,21 @@ class personnalworkingboardbox extends ModeleBoxes
     /**
      * Constructor
      */
-    public function __construct()
+    public function __construct(DoliDB $db, $param = '')
     {
         global $langs;
-        $langs->load("boxes");
+        $langs->load('boxes');
+        $langs->load('personnalworkingboard@personnalworkingboard');
+		$langs->load('commercial');
+		$langs->load('bills');
+		$langs->load('orders');
+		$langs->load('contracts');
 
-        $this->boxlabel = $langs->transnoentitiesnoconv("MyBox");
+		parent::__construct($db, $param);
+		
+        $this->boxlabel = $langs->transnoentitiesnoconv("PersonnalWorkingBoardGlobalWidget");
+		
+		$this->param = $param;
     }
 
     /**
@@ -56,22 +71,37 @@ class personnalworkingboardbox extends ModeleBoxes
      * 	@param		int		$max		Maximum number of records to load
      * 	@return		void
      */
-    public function loadBox($max = 5)
+    public function loadBox()
     {
-        global $conf, $user, $langs, $db;
+        global $langs;
 
-        $this->max = $max;
-
-        //include_once DOL_DOCUMENT_ROOT . "/personnalworkingboard/class/personnalworkingboard.class.php";
-
-        $text = $langs->trans("MyBoxDescription", $max);
+        $text = $langs->trans("PersonnalWorkingBoardGlobalBoxDescription");
         $this->info_box_head = array(
             'text' => $text,
             'limit' => dol_strlen($text)
         );
-
-        $this->info_box_contents[0][0] = array('td' => 'align="left"',
-            'text' => $langs->trans("MyBoxContent"));
+		
+		$i = 0;
+		
+		$TPersonnalWorkingBoard = new TPersonnalWorkingBoard;
+		$output = $TPersonnalWorkingBoard->getContentDolibarrStyle('global');
+		
+        $meto_output = $TPersonnalWorkingBoard->getMeteoContent();
+		if (!empty($meto_output))
+		{
+			$this->info_box_contents[$i][0] = array(
+				'tr' => 'class="nohover"'
+				,'td' => 'class="nohover hideonsmartphone center valignmiddle"'
+				,'text' => $meto_output
+			);
+			$i++;
+		}
+		
+        $this->info_box_contents[$i][0] = array(
+			'tr' => 'class="nohover"'
+			,'td' => 'class="tdboxstats nohover flexcontainer centpercent"'
+            ,'text' => $output
+		);
     }
 
     /**
@@ -81,8 +111,8 @@ class personnalworkingboardbox extends ModeleBoxes
      * 	@param  array	$contents   Array with properties of box lines
      * 	@return	void
      */
-    public function showBox($head = null, $contents = null)
+    public function showBox($head = null, $contents = null, $nooutput=0)
     {
-        parent::showBox($this->info_box_head, $this->info_box_contents);
+        parent::showBox($this->info_box_head, $this->info_box_contents, $nooutput);
     }
 }

@@ -8,34 +8,9 @@ PersonnalWorkingBoardAbout = A propos du module PersonnalWorkingBoard
 
 PersonnalWorkingBoard=PersonnalWorkingBoard
 
-# MENU
-TopMenuPersonnalWorkingBoard=PersonnalWorkingBoard
+# BOX
+PersonnalWorkingBoardFilteredWidget=Tableau de bord des éléments ouverts (filtre sur tiers non étendus)
+PersonnalWorkingBoardFilteredBoxDescription=Tableau de bord des éléments ouverts (filtre sur tiers non étendus)
 
-# STATUS
-PersonnalWorkingBoardStatusDraft=Brouillon (à valider)
-PersonnalWorkingBoardStatusValidated=Validée (à accepter)
-PersonnalWorkingBoardStatusRefused=Refusée (fermée)
-PersonnalWorkingBoardStatusAccepted=Acceptée (fermée)
-
-Draft=Brouillon
-Validate=Validé
-Refused=Refusé
-Accepted=Accepté
-
-# LIST
-PersonnalWorkingBoardList=Liste PersonnalWorkingBoard
-NoPersonnalWorkingBoard=(vide)
-
-# CARD
-NewPersonnalWorkingBoard=Création PersonnalWorkingBoard
-PersonnalWorkingBoardCard=Fiche PersonnalWorkingBoard
-
-# CARD TPL
-Save=Enregistrer
-CreateDraft=Créer brouillon
-Cancel=Annuler
-Validate=Valider
-Modify=Modifier
-Reopen=Rouvrir
-ToClone=Cloner
-Delete=Supprimer
+PersonnalWorkingBoardGlobalWidget=Tableau de bord des éléments ouverts (tiers étendus)
+PersonnalWorkingBoardGlobalBoxDescription=Tableau de bord des éléments ouverts (tiers étendus)

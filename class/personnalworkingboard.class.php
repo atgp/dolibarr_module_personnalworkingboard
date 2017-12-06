@@ -9,285 +9,364 @@ if (!class_exists('TObjetStd'))
 	require_once dirname(__FILE__).'/../config.php';
 }
 
+require_once DOL_DOCUMENT_ROOT.'/core/class/workboardresponse.class.php';
 
 class TPersonnalWorkingBoard extends TObjetStd
 {
-	/**
-	 * Draft status
-	 */
-	const STATUS_DRAFT = 0;
-	/**
-	 * Validated status
-	 */
-	const STATUS_VALIDATED = 1;
-	/**
-	 * Refused status
-	 */
-	const STATUS_REFUSED = 3;
-	/**
-	 * Accepted status
-	 */
-	const STATUS_ACCEPTED = 4;
-	
-	public static $TStatus = array(
-		self::STATUS_DRAFT => 'Draft'
-		,self::STATUS_VALIDATED => 'Validate'
-		,self::STATUS_REFUSED => 'Refuse'
-		,self::STATUS_ACCEPTED => 'Accept'
-	);
-
-
-	public function __construct()
-	{
-		global $conf,$langs,$db;
-		
-		$this->set_table(MAIN_DB_PREFIX.'personnalworkingboard');
-		
-		$this->add_champs('ref', array('type' => 'string', 'length' => 80, 'index' => true));
-		$this->add_champs('label', array('type' => 'string'));
-		$this->add_champs('status', array('type' => 'integer'));
-		
-		$this->add_champs('entity,fk_user_author', array('type' => 'integer', 'index' => true));
-//		$this->add_champs('date_other,date_other_2', array('type' => 'date'));
-//		$this->add_champs('note', array('type' => 'text'));
-		
-		$this->_init_vars();
-		$this->start();
-		
-//		$this->setChild('TPersonnalWorkingBoardChild','fk_personnalworkingboard');
-		
-		if (!class_exists('GenericObject')) require_once DOL_DOCUMENT_ROOT.'/core/class/genericobject.class.php';
-		$this->generic = new GenericObject($db);
-		$this->generic->table_element = $this->get_table();
-		$this->generic->element = 'personnalworkingboard';
-		
-		$this->status = self::STATUS_DRAFT;
-		$this->entity = $conf->entity;
-	}
-
-	public function save(&$PDOdb, $addprov=false)
-	{
-		global $user;
-		
-		if (!$this->getId()) $this->fk_user_author = $user->id;
-		
-		$res = parent::save($PDOdb);
-		
-		if ($addprov || !empty($this->is_clone))
-		{
-			$this->ref = '(PROV'.$this->getId().')';
-			
-			if (!empty($this->is_clone)) $this->status = self::STATUS_DRAFT;
-			
-			$wc = $this->withChild;
-			$this->withChild = false;
-			$res = parent::save($PDOdb);
-			$this->withChild = $wc;
-		}
-		
-		return $res;
-	}
-	
-	public function load(&$PDOdb, $id, $loadChild = true)
-	{
-		global $db;
-		
-		$res = parent::load($PDOdb, $id, $loadChild);
-		
-		$this->generic->id = $this->getId();
-		$this->generic->ref = $this->ref;
-		
-		if ($loadChild) $this->fetchObjectLinked();
-		
-		return $res;
-	}
-	
-	public function delete(&$PDOdb)
-	{
-		$this->generic->deleteObjectLinked();
-		
-		parent::delete($PDOdb);
-	}
-	
-	public function fetchObjectLinked()
-	{
-		$this->generic->fetchObjectLinked($this->getId());
-	}
-
-	public function setDraft(&$PDOdb)
-	{
-		if ($this->status == self::STATUS_VALIDATED)
-		{
-			$this->status = self::STATUS_DRAFT;
-			$this->withChild = false;
-			
-			return parent::save($PDOdb);
-		}
-		
-		return 0;
-	}
-	
-	public function setValid(&$PDOdb)
-	{
-//		global $user;
-		
-		$this->ref = $this->getNumero();
-		$this->status = self::STATUS_VALIDATED;
-		
-		return parent::save($PDOdb);
-	}
-	
-	public function getNumero()
-	{
-		if (preg_match('/^[\(]?PROV/i', $this->ref) || empty($this->ref))
-		{
-			return $this->getNextNumero();
-		}
-		
-		return $this->ref;
-	}
-	
-	private function getNextNumero()
-	{
-		global $db,$conf;
-		
-		require_once DOL_DOCUMENT_ROOT.'/core/lib/functions2.lib.php';
-		
-		$mask = !empty($conf->global->MYMODULE_REF_MASK) ? $conf->global->MYMODULE_REF_MASK : 'MM{yy}{mm}-{0000}';
-		$numero = get_next_value($db, $mask, 'personnalworkingboard', 'ref');
-		
-		return $numero;
-	}
-	
-	public function setRefused(&$PDOdb)
-	{
-//		global $user;
-		
-		$this->status = self::STATUS_REFUSED;
-		$this->withChild = false;
-		
-		return parent::save($PDOdb);
-	}
-	
-	public function setAccepted(&$PDOdb)
-	{
-//		global $user;
-		
-		$this->status = self::STATUS_ACCEPTED;
-		$this->withChild = false;
-		
-		return parent::save($PDOdb);
-	}
-	
-	public function getNomUrl($withpicto=0, $get_params='')
-	{
-		global $langs;
-
-        $result='';
-        $label = '<u>' . $langs->trans("ShowPersonnalWorkingBoard") . '</u>';
-        if (! empty($this->ref)) $label.= '<br><b>'.$langs->trans('Ref').':</b> '.$this->ref;
-        
-        $linkclose = '" title="'.dol_escape_htmltag($label, 1).'" class="classfortooltip">';
-        $link = '<a href="'.dol_buildpath('/personnalworkingboard/card.php', 1).'?id='.$this->getId(). $get_params .$linkclose;
-       
-        $linkend='</a>';
-
-        $picto='generic';
-		
-        if ($withpicto) $result.=($link.img_object($label, $picto, 'class="classfortooltip"').$linkend);
-        if ($withpicto && $withpicto != 2) $result.=' ';
-		
-        $result.=$link.$this->ref.$linkend;
-		
-        return $result;
-	}
-	
-	public static function getStaticNomUrl($id, $withpicto=0)
-	{
-		global $PDOdb;
-		
-		if (empty($PDOdb)) $PDOdb = new TPDOdb;
-		
-		$object = new TPersonnalWorkingBoard;
-		$object->load($PDOdb, $id, false);
-		
-		return $object->getNomUrl($withpicto);
-	}
-	
-	public function getLibStatut($mode=0)
-    {
-        return self::LibStatut($this->status, $mode);
-    }
-	
-	public static function LibStatut($status, $mode)
-	{
-		global $langs;
-		$langs->load('personnalworkingboard@personnalworkingboard');
-
-		if ($status==self::STATUS_DRAFT) { $statustrans='statut0'; $keytrans='PersonnalWorkingBoardStatusDraft'; $shortkeytrans='Draft'; }
-		if ($status==self::STATUS_VALIDATED) { $statustrans='statut1'; $keytrans='PersonnalWorkingBoardStatusValidated'; $shortkeytrans='Validate'; }
-		if ($status==self::STATUS_REFUSED) { $statustrans='statut5'; $keytrans='PersonnalWorkingBoardStatusRefused'; $shortkeytrans='Refused'; }
-		if ($status==self::STATUS_ACCEPTED) { $statustrans='statut6'; $keytrans='PersonnalWorkingBoardStatusAccepted'; $shortkeytrans='Accepted'; }
-
-		
-		if ($mode == 0) return img_picto($langs->trans($keytrans), $statustrans);
-		elseif ($mode == 1) return img_picto($langs->trans($keytrans), $statustrans).' '.$langs->trans($keytrans);
-		elseif ($mode == 2) return $langs->trans($keytrans).' '.img_picto($langs->trans($keytrans), $statustrans);
-		elseif ($mode == 3) return img_picto($langs->trans($keytrans), $statustrans).' '.$langs->trans($shortkeytrans);
-		elseif ($mode == 4) return $langs->trans($shortkeytrans).' '.img_picto($langs->trans($keytrans), $statustrans);
-	}
-	
-}
-
-/**
- * Class needed if link exists with dolibarr object from element_element and call from $form->showLinkedObjectBlock()
- */
-class Personnalworkingboard extends TPersonnalWorkingBoard
-{
-	private $PDOdb;
+	public $TDashboardLine = array();
 	
 	public function __construct()
 	{
 		parent::__construct();
-		
-		$this->PDOdb = new TPDOdb;
 	}
-	
-	function fetch($id)
-	{
-		return $this->load($this->PDOdb, $id);
-	}
-}
 
-/*
-class TPersonnalWorkingBoardChild extends TObjetStd
-{
-	public function __construct()
+	/**
+	 * Renvoi sous forme de chaine le contenu de la boite à afficher
+	 * 
+	 * @param string	$mode	'filtered' or 'global'
+	 * @return string
+	 */
+	public function getContentDolibarrStyle($mode='filtered')
 	{
-		$this->set_table(MAIN_DB_PREFIX.'personnalworkingboard_child');
+		global $conf, $user, $langs;
 		
-		$this->add_champs('fk_personnalworkingboard', array('type' => 'integer', 'index' => true));
-//		$this->add_champs('fk_user', array('type' => 'integer', 'index' => true)); // link n_n with user for example
+		$rights_value = $user->rights->societe->client->voir;
 		
-		$this->_init_vars();
-		$this->start();
+		if (!empty($rights_value) && $mode === 'global') return '';
+		elseif (empty($rights_value) && $mode === 'filtered') return '';
 		
-		$this->user = null;
+		if (!empty($rights_value)) $user->rights->societe->client->voir = 0;
+		else
+		{
+			if (empty($user->rights->societe->client)) $user->rights->societe->client = new stdClass();
+			$user->rights->societe->client->voir = 1;
+		}
+		
+		$TDashboardLine = $this->load_all_board();
+		
+		$user->rights->societe->client->voir = $rights_value;
+		
+		// copié/collé du fichier htdocs/index.php vers la ligne 550 depuis une 6.0
+		$boxwork='';
+		// Show dashboard
+		$nbworkboardempty=0;
+		foreach($TDashboardLine as &$board)
+		{
+			if (empty($board->nbtodo)) $nbworkboardempty++;
+
+			$textlate = $langs->trans("NActionsLate",$board->nbtodolate);
+			$textlate.= ' ('.$langs->trans("Late").' = '.$langs->trans("DateReference").' > '.$langs->trans("DateToday").' '.(ceil($board->warning_delay) >= 0 ? '+' : '').ceil($board->warning_delay).' '.$langs->trans("days").')';
+
+			$boxwork .='<div class="boxstatsindicator thumbstat150 nobold nounderline"><div class="boxstats130 boxstatsborder">';
+			$boxwork .= '<div class="boxstatscontent">';
+			$boxwork .= '<span class="boxstatstext" title="'.dol_escape_htmltag($board->label).'">'.$board->img.' '.$board->label.'</span><br>';
+			$boxwork .= '<a class="valignmiddle dashboardlineindicator" href="'.$board->url.'"><span class="dashboardlineindicator'.(($board->nbtodo == 0)?' dashboardlineok':'').'">'.$board->nbtodo.'</span></a>';
+			$boxwork .= '</div>';
+			if ($board->nbtodolate > 0)
+			{
+				$boxwork .= '<div class="dashboardlinelatecoin nowrap">';
+				$boxwork .= '<a title="'.dol_escape_htmltag($textlate).'" class="valignmiddle dashboardlineindicatorlate'.($board->nbtodolate>0?' dashboardlineko':' dashboardlineok').'" href="'.((!$board->url_late) ? $board->url : $board->url_late ).'">';
+				//$boxwork .= img_picto($textlate, "warning_white", 'class="valigntextbottom"').'';
+				$boxwork .= img_picto($textlate, "warning_white", 'class="valigntextbottom"').'';
+				$boxwork .= '<span class="dashboardlineindicatorlate'.($board->nbtodolate>0?' dashboardlineko':' dashboardlineok').'">';
+				$boxwork .= $board->nbtodolate;
+				$boxwork .= '</span>';
+				$boxwork .= '</a>';
+				$boxwork .= '</div>';
+			}
+			$boxwork.='</div></div>';
+			$boxwork .="\n";
+		}
+	
+		// Dolibarr style : ça permet d'aligner la dernière ligne comme souhaité (tjr issue du copié/collé)
+		$boxwork .='<div class="boxstatsindicator thumbstat150 nobold nounderline"></div>';
+		$boxwork .='<div class="boxstatsindicator thumbstat150 nobold nounderline"></div>';
+		$boxwork .='<div class="boxstatsindicator thumbstat150 nobold nounderline"></div>';
+		$boxwork .='<div class="boxstatsindicator thumbstat150 nobold nounderline"></div>';
+		$boxwork .='<div class="boxstatsindicator thumbstat150 nobold nounderline"></div>';
+		$boxwork .='<div class="boxstatsindicator thumbstat150 nobold nounderline"></div>';
+		
+		return $boxwork;
 	}
 	
-	public function load(&$PDOdb, $id, $loadChild=true)
+	public function getMeteoContent()
 	{
-		$res = parent::load($PDOdb, $id, $loadChild);
+		global $conf,$langs;
 		
-		return $res;
+		$boxwork = '';
+		if (empty($conf->global->MAIN_DISABLE_METEO) && !empty($this->TDashboardLine))
+		{
+			$valid_dashboardlines=array();
+			foreach($this->TDashboardLine as $tmp)
+			{
+				if ($tmp instanceof WorkboardResponse) $valid_dashboardlines[] = $tmp;
+			}
+
+			// We calculate $totallate. Must be defined before start of next loop because it is show in first fetch on next loop
+			foreach($valid_dashboardlines as $board)
+			{
+				if ($board->nbtodolate > 0) {
+					$totallate += $board->nbtodolate;
+				}
+			}
+			
+			$text='';
+			if ($totallate > 0) $text=$langs->transnoentitiesnoconv("WarningYouHaveAtLeastOneTaskLate").' ('.$langs->transnoentitiesnoconv("NActionsLate",$totallate).')';
+			$text.='. '.$langs->trans("LateDesc");
+			//$text.=$form->textwithpicto('',$langs->trans("LateDesc"));
+			$options='height="64px"';
+			$boxwork.=showWeather($totallate,$text,$options);
+		}
+		
+		return $boxwork;
 	}
 	
-	public function loadBy(&$PDOdb, $value, $field, $annexe = false)
+	public function load_all_board()
 	{
-		$res = parent::loadBy($PDOdb, $value, $field, $annexe);
+		global $conf,$user;
+//		dol_include_once('/core/class/workboardresponse.class.php');
+		$TDashboardLine = array();
 		
-		return $res;
+		if (! empty($conf->agenda->enabled) && $user->rights->agenda->myactions->read)
+		{
+			$TDashboardLine[] = $this->load_board_actioncomm($user);
+		}
+
+		// Number of project opened
+		if (! empty($conf->projet->enabled) && $user->rights->projet->lire)
+		{
+			$TDashboardLine[] = $this->load_board_project($user);
+		}
+
+		// Number of tasks to do (late)
+		if (! empty($conf->projet->enabled) && empty($conf->global->PROJECT_HIDE_TASKS) && $user->rights->projet->lire)
+		{
+			$TDashboardLine[] = $this->load_board_task($user);
+		}
+
+		// Number of commercial proposals opened (expired)
+		if (! empty($conf->propal->enabled) && $user->rights->propale->lire)
+		{
+			$TDashboardLine[] = $this->load_board_propal($user, 'opened');
+			$TDashboardLine[] = $this->load_board_propal($user, 'signed');
+		}
+
+		// Number of commercial proposals opened (expired)
+		if (! empty($conf->supplier_proposal->enabled) && $user->rights->supplier_proposal->lire)
+		{
+			$TDashboardLine[] = $this->load_board_supplierproposal($user, 'opened');
+			$TDashboardLine[] = $this->load_board_supplierproposal($user, 'signed');
+		}
+
+		// Number of customer orders a deal
+		if (! empty($conf->commande->enabled) && $user->rights->commande->lire)
+		{
+			$TDashboardLine[] = $this->load_board_commande($user);
+		}
+
+		// Number of suppliers orders a deal
+		if (! empty($conf->supplier_order->enabled) && $user->rights->fournisseur->commande->lire)
+		{
+			$TDashboardLine[] = $this->load_board_commandefournisseur($user);
+		}
+
+		// Number of services enabled (delayed)
+		if (! empty($conf->contrat->enabled) && $user->rights->contrat->lire)
+		{
+			$TDashboardLine[] = $this->load_board_contrat($user, 'inactives');
+			$TDashboardLine[] = $this->load_board_contrat($user, 'expired');
+		}
+		// Number of invoices customers (has paid)
+		if (! empty($conf->facture->enabled) && $user->rights->facture->lire)
+		{
+			$TDashboardLine[] = $this->load_board_facture($user);
+		}
+
+		// Number of supplier invoices (has paid)
+		if (! empty($conf->supplier_invoice->enabled) && ! empty($user->rights->fournisseur->facture->lire))
+		{
+			$TDashboardLine[] = $this->load_board_facturefournisseur($user);
+		}
+
+		// Number of transactions to conciliate
+		if (! empty($conf->banque->enabled) && $user->rights->banque->lire && ! $user->societe_id)
+		{
+			$Tab = $this->load_board_account($user);
+			if (!empty($Tab)) $TDashboardLine[] = $Tab;
+		}
+
+		// Number of cheque to send
+		if (! empty($conf->banque->enabled) && $user->rights->banque->lire && ! $user->societe_id && empty($conf->global->BANK_DISABLE_CHECK_DEPOSIT))
+		{
+			$TDashboardLine[] = $this->load_board_remisecheque($user);
+		}
+
+		// Number of foundation members
+		if (! empty($conf->adherent->enabled) && $user->rights->adherent->lire && ! $user->societe_id)
+		{
+			$TDashboardLine[] = $this->load_board_adherent($user);
+		}
+
+		// Number of expense reports to approve
+		if (! empty($conf->expensereport->enabled) && $user->rights->expensereport->approve)
+		{
+			$TDashboardLine[] = $this->load_board_expensereport($user, 'toapprove');
+		}
+
+		// Number of expense reports to pay
+		if (! empty($conf->expensereport->enabled) && $user->rights->expensereport->to_paid)
+		{
+			$TDashboardLine[] = $this->load_board_expensereport($user, 'topay');
+		}
+		
+		$this->TDashboardLine = $TDashboardLine;
+		return $TDashboardLine;
 	}
 	
+	
+	private function load_board_actioncomm($user)
+	{
+		global $db;
+		
+		include_once DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php';
+		$board=new ActionComm($db);
+		return $board->load_board($user);
+			
+	}
+	
+	
+	private function load_board_project($user)
+	{
+		global $db;
+		
+		include_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
+		$board=new Project($db);
+		return $board->load_board($user);
+	}
+	
+	
+	private function load_board_task($user)
+	{
+		global $db;
+		
+		include_once DOL_DOCUMENT_ROOT.'/projet/class/task.class.php';
+		$board=new Task($db);
+		return $board->load_board($user);
+	}
+	
+	
+	private function load_board_propal($user, $mode)
+	{
+		global $db;
+		
+		include_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
+		$board=new Propal($db);
+		return $board->load_board($user, $mode);
+	}
+	
+	
+	private function load_board_supplierproposal($user, $mode)
+	{
+		global $db;
+		
+		include_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
+		$board=new SupplierProposal($db);
+		return $board->load_board($user, $mode);
+	}
+	
+	
+	private function load_board_commande($user)
+	{
+		global $db;
+		
+		include_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
+		$board=new Commande($db);
+		return $board->load_board($user);
+	}
+	
+	
+	private function load_board_commandefournisseur($user)
+	{
+		global $db;
+		
+		include_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.commande.class.php';
+		$board=new CommandeFournisseur($db);
+		return $board->load_board($user);
+	}
+	
+	
+	private function load_board_contrat($user, $mode)
+	{
+		global $db;
+		
+		include_once DOL_DOCUMENT_ROOT.'/contrat/class/contrat.class.php';
+		$board=new Contrat($db);
+		return $board->load_board($user, $mode);
+	}
+	
+	
+	private function load_board_facture($user)
+	{
+		global $db;
+		
+		include_once DOL_DOCUMENT_ROOT.'/compta/facture/class/facture.class.php';
+		$board=new Facture($db);
+		return $board->load_board($user);
+	}
+	
+	
+	private function load_board_facturefournisseur($user)
+	{
+		global $db;
+		
+		include_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.facture.class.php';
+		$board=new FactureFournisseur($db);
+		return $board->load_board($user);
+	}
+	
+	
+	private function load_board_account($user)
+	{
+		global $db;
+		
+		include_once DOL_DOCUMENT_ROOT.'/compta/bank/class/account.class.php';
+		$board=new Account($db);
+		$nb = $board::countAccountToReconcile();    // Get nb of account to reconciliate
+		if ($nb > 0)
+		{
+			return $board->load_board($user);
+		}
+		
+		return false;
+	}
+	
+	
+	private function load_board_remisecheque($user)
+	{
+		global $db;
+		
+		include_once DOL_DOCUMENT_ROOT.'/compta/paiement/cheque/class/remisecheque.class.php';
+		$board=new RemiseCheque($db);
+		return $board->load_board($user);
+	}
+	
+	
+	private function load_board_adherent($user)
+	{
+		global $db;
+		
+		include_once DOL_DOCUMENT_ROOT.'/adherents/class/adherent.class.php';
+		$board=new Adherent($db);
+		return $board->load_board($user);
+	}
+	
+	
+	private function load_board_expensereport($user, $mode)
+	{
+		global $db;
+		
+		include_once DOL_DOCUMENT_ROOT.'/expensereport/class/expensereport.class.php';
+		$board=new ExpenseReport($db);
+		return $board->load_board($user, $mode);
+	}
 }
-*/
