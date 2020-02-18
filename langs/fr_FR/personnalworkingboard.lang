@@ -9,8 +9,8 @@ PersonnalWorkingBoardAbout = A propos du module PersonnalWorkingBoard
 PersonnalWorkingBoard=PersonnalWorkingBoard
 
 # BOX
-PersonnalWorkingBoardFilteredWidget=Tableau de bord des éléments ouverts (filtre sur tiers non étendus)
-PersonnalWorkingBoardFilteredBoxDescription=Tableau de bord des éléments ouverts (filtre sur tiers non étendus)
+PersonnalWorkingBoardFilteredWidget=Tableau de bord des éléments ouverts (filtré sur mes tiers)
+PersonnalWorkingBoardFilteredBoxDescription=Tableau de bord des éléments ouverts (filtre sur mes tiers)
 
-PersonnalWorkingBoardGlobalWidget=Tableau de bord des éléments ouverts (tiers étendus)
-PersonnalWorkingBoardGlobalBoxDescription=Tableau de bord des éléments ouverts (tiers étendus)
+PersonnalWorkingBoardGlobalWidget=Tableau de bord des éléments ouverts (sur tous les tiers)
+PersonnalWorkingBoardGlobalBoxDescription=Tableau de bord des éléments ouverts (sur tous les tiers)
