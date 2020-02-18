@@ -14,7 +14,7 @@ require_once DOL_DOCUMENT_ROOT.'/core/class/workboardresponse.class.php';
 class TPersonnalWorkingBoard extends TObjetStd
 {
 	public $TDashboardLine = array();
-	
+
 	public function __construct()
 	{
 		parent::__construct();
@@ -22,30 +22,30 @@ class TPersonnalWorkingBoard extends TObjetStd
 
 	/**
 	 * Renvoi sous forme de chaine le contenu de la boite à afficher
-	 * 
+	 *
 	 * @param string	$mode	'filtered' or 'global'
 	 * @return string
 	 */
 	public function getContentDolibarrStyle($mode='filtered')
 	{
 		global $conf, $user, $langs;
-		
+
 		$rights_value = $user->rights->societe->client->voir;
-		
+
 		if (!empty($rights_value) && $mode === 'global') return '';
 		elseif (empty($rights_value) && $mode === 'filtered') return '';
-		
+
 		if (!empty($rights_value)) $user->rights->societe->client->voir = 0;
 		else
 		{
 			if (empty($user->rights->societe->client)) $user->rights->societe->client = new stdClass();
 			$user->rights->societe->client->voir = 1;
 		}
-		
+
 		$TDashboardLine = $this->load_all_board();
-		
+
 		$user->rights->societe->client->voir = $rights_value;
-		
+
 		// copié/collé du fichier htdocs/index.php vers la ligne 550 depuis une 6.0
 		$boxwork='';
 		// Show dashboard
@@ -77,7 +77,7 @@ class TPersonnalWorkingBoard extends TObjetStd
 			$boxwork.='</div></div>';
 			$boxwork .="\n";
 		}
-	
+
 		// Dolibarr style : ça permet d'aligner la dernière ligne comme souhaité (tjr issue du copié/collé)
 		$boxwork .='<div class="boxstatsindicator thumbstat150 nobold nounderline"></div>';
 		$boxwork .='<div class="boxstatsindicator thumbstat150 nobold nounderline"></div>';
@@ -85,14 +85,14 @@ class TPersonnalWorkingBoard extends TObjetStd
 		$boxwork .='<div class="boxstatsindicator thumbstat150 nobold nounderline"></div>';
 		$boxwork .='<div class="boxstatsindicator thumbstat150 nobold nounderline"></div>';
 		$boxwork .='<div class="boxstatsindicator thumbstat150 nobold nounderline"></div>';
-		
+
 		return $boxwork;
 	}
-	
+
 	public function getMeteoContent()
 	{
 		global $conf,$langs;
-		
+
 		$boxwork = '';
 		if (empty($conf->global->MAIN_DISABLE_METEO) && !empty($this->TDashboardLine))
 		{
@@ -109,7 +109,7 @@ class TPersonnalWorkingBoard extends TObjetStd
 					$totallate += $board->nbtodolate;
 				}
 			}
-			
+
 			$text='';
 			if ($totallate > 0) $text=$langs->transnoentitiesnoconv("WarningYouHaveAtLeastOneTaskLate").' ('.$langs->transnoentitiesnoconv("NActionsLate",$totallate).')';
 			$text.='. '.$langs->trans("LateDesc");
@@ -117,16 +117,16 @@ class TPersonnalWorkingBoard extends TObjetStd
 			$options='height="64px"';
 			$boxwork.=showWeather($totallate,$text,$options);
 		}
-		
+
 		return $boxwork;
 	}
-	
+
 	public function load_all_board()
 	{
 		global $conf,$user;
 //		dol_include_once('/core/class/workboardresponse.class.php');
 		$TDashboardLine = array();
-		
+
 		if (! empty($conf->agenda->enabled) && $user->rights->agenda->myactions->read)
 		{
 			$TDashboardLine[] = $this->load_board_actioncomm($user);
@@ -173,7 +173,8 @@ class TPersonnalWorkingBoard extends TObjetStd
 		// Number of services enabled (delayed)
 		if (! empty($conf->contrat->enabled) && $user->rights->contrat->lire)
 		{
-			$TDashboardLine[] = $this->load_board_contrat($user, 'inactives');
+			$inactive = ((float) DOL_VERSION < 9 ? 'inactives' : 'inactive');
+			$TDashboardLine[] = $this->load_board_contrat($user, $inactive);
 			$TDashboardLine[] = $this->load_board_contrat($user, 'expired');
 		}
 		// Number of invoices customers (has paid)
@@ -218,117 +219,117 @@ class TPersonnalWorkingBoard extends TObjetStd
 		{
 			$TDashboardLine[] = $this->load_board_expensereport($user, 'topay');
 		}
-		
+
 		$this->TDashboardLine = $TDashboardLine;
 		return $TDashboardLine;
 	}
-	
-	
+
+
 	private function load_board_actioncomm($user)
 	{
 		global $db;
-		
+
 		include_once DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php';
 		$board=new ActionComm($db);
 		return $board->load_board($user);
-			
+
 	}
-	
-	
+
+
 	private function load_board_project($user)
 	{
 		global $db;
-		
+
 		include_once DOL_DOCUMENT_ROOT.'/projet/class/project.class.php';
 		$board=new Project($db);
 		return $board->load_board($user);
 	}
-	
-	
+
+
 	private function load_board_task($user)
 	{
 		global $db;
-		
+
 		include_once DOL_DOCUMENT_ROOT.'/projet/class/task.class.php';
 		$board=new Task($db);
 		return $board->load_board($user);
 	}
-	
-	
+
+
 	private function load_board_propal($user, $mode)
 	{
 		global $db;
-		
+
 		include_once DOL_DOCUMENT_ROOT.'/comm/propal/class/propal.class.php';
 		$board=new Propal($db);
 		return $board->load_board($user, $mode);
 	}
-	
-	
+
+
 	private function load_board_supplierproposal($user, $mode)
 	{
 		global $db;
-		
+
 		include_once DOL_DOCUMENT_ROOT.'/supplier_proposal/class/supplier_proposal.class.php';
 		$board=new SupplierProposal($db);
 		return $board->load_board($user, $mode);
 	}
-	
-	
+
+
 	private function load_board_commande($user)
 	{
 		global $db;
-		
+
 		include_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
 		$board=new Commande($db);
 		return $board->load_board($user);
 	}
-	
-	
+
+
 	private function load_board_commandefournisseur($user)
 	{
 		global $db;
-		
+
 		include_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.commande.class.php';
 		$board=new CommandeFournisseur($db);
 		return $board->load_board($user);
 	}
-	
-	
+
+
 	private function load_board_contrat($user, $mode)
 	{
 		global $db;
-		
+
 		include_once DOL_DOCUMENT_ROOT.'/contrat/class/contrat.class.php';
 		$board=new Contrat($db);
 		return $board->load_board($user, $mode);
 	}
-	
-	
+
+
 	private function load_board_facture($user)
 	{
 		global $db;
-		
+
 		include_once DOL_DOCUMENT_ROOT.'/compta/facture/class/facture.class.php';
 		$board=new Facture($db);
 		return $board->load_board($user);
 	}
-	
-	
+
+
 	private function load_board_facturefournisseur($user)
 	{
 		global $db;
-		
+
 		include_once DOL_DOCUMENT_ROOT.'/fourn/class/fournisseur.facture.class.php';
 		$board=new FactureFournisseur($db);
 		return $board->load_board($user);
 	}
-	
-	
+
+
 	private function load_board_account($user)
 	{
 		global $db;
-		
+
 		include_once DOL_DOCUMENT_ROOT.'/compta/bank/class/account.class.php';
 		$board=new Account($db);
 		$nb = $board::countAccountToReconcile();    // Get nb of account to reconciliate
@@ -336,35 +337,35 @@ class TPersonnalWorkingBoard extends TObjetStd
 		{
 			return $board->load_board($user);
 		}
-		
+
 		return false;
 	}
-	
-	
+
+
 	private function load_board_remisecheque($user)
 	{
 		global $db;
-		
+
 		include_once DOL_DOCUMENT_ROOT.'/compta/paiement/cheque/class/remisecheque.class.php';
 		$board=new RemiseCheque($db);
 		return $board->load_board($user);
 	}
-	
-	
+
+
 	private function load_board_adherent($user)
 	{
 		global $db;
-		
+
 		include_once DOL_DOCUMENT_ROOT.'/adherents/class/adherent.class.php';
 		$board=new Adherent($db);
 		return $board->load_board($user);
 	}
-	
-	
+
+
 	private function load_board_expensereport($user, $mode)
 	{
 		global $db;
-		
+
 		include_once DOL_DOCUMENT_ROOT.'/expensereport/class/expensereport.class.php';
 		$board=new ExpenseReport($db);
 		return $board->load_board($user, $mode);
