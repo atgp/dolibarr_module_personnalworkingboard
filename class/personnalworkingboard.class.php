@@ -332,7 +332,7 @@ class TPersonnalWorkingBoard extends TObjetStd
 
 		include_once DOL_DOCUMENT_ROOT.'/compta/bank/class/account.class.php';
 		$board=new Account($db);
-		$nb = $board::countAccountToReconcile();    // Get nb of account to reconciliate
+		$nb = $board->countAccountToReconcile();    // Get nb of account to reconciliate
 		if ($nb > 0)
 		{
 			return $board->load_board($user);
